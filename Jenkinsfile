@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'gradle:8.3-jdk17'
+            image 'gradle:8.9-jdk17'
             args '-v $HOME/.gradle:/home/gradle/.gradle'
         }
     }
@@ -13,8 +13,8 @@ pipeline {
     */
     stages {
         stage('Checkout') {
-            steps { checkout scm }
-            // git branch: 'main', url: 'https://github.com/your-org/jenkins-shared-lib.git'
+            //steps { checkout scm }
+            git branch: 'main', url: 'https://github.com/sumanthvt/jenkins-shared-library.git'
         }
         stage('Unit Tests') {
             steps { sh './gradlew clean test' }
