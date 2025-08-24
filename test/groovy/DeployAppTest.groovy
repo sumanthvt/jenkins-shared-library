@@ -12,16 +12,22 @@ class DeployAppTest extends BasePipelineTest {
     void setUp() throws Exception {
         super.setUp()
 
+        // Load the shared library step under test
         deployAppScript = loadScript("vars/deployApp.groovy")
 
-        // Mock echo
+        // Mock echo step
         helper.registerAllowedMethod("echo", [String]) { msg -> println msg }
 
-        // Mock error() to throw RuntimeException
+        // Mock error step to throw RuntimeException
         helper.registerAllowedMethod("error", [String]) { msg -> throw new RuntimeException(msg) }
 
-        // Mock DeployUtils constructor
-        mockDeployUtils = [:]
+        // --- CHANGE: Mock DeployUtils as a real Groovy object with deploy() method ---
+        mockDeployUtils = new Object() {
+            def deploy(String app, String version) {
+                return "FAILED"  // default, will override per test
+            }
+        }
+
         helper.registerAllowedMethod("org.example.utils.DeployUtils", [Object, String]) { script, env ->
             return mockDeployUtils
         }
@@ -29,7 +35,8 @@ class DeployAppTest extends BasePipelineTest {
 
     @Test
     void testSuccessfulDeployment() {
-        mockDeployUtils.deploy = { app, version -> "SUCCESS" }
+        // Override deploy() to return SUCCESS for this test
+        mockDeployUtils.metaClass.deploy = { String app, String version -> "SUCCESS" }
 
         def result = deployAppScript.call("myApp", "1.0.0", "dev")
         assertEquals("SUCCESS", result)
@@ -37,14 +44,12 @@ class DeployAppTest extends BasePipelineTest {
 
     @Test
     void testDeploymentFailure() {
-        // **Important:** call error() to simulate failure
-        mockDeployUtils.deploy = { app, version ->
-            deployAppScript.error("Deployment failed for ${app}:${version} on dev")
-        }
+        // Override deploy() to return FAILED to trigger error()
+        mockDeployUtils.metaClass.deploy = { String app, String version -> "FAILED" }
 
         try {
             deployAppScript.call("myApp", "1.0.0", "dev")
-            fail("Expected exception not thrown") // This line now works correctly
+            fail("Expected exception not thrown")
         } catch (RuntimeException e) {
             assertTrue(e.message.contains("Deployment failed"))
         }
