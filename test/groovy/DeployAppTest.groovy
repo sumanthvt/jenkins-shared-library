@@ -5,8 +5,9 @@ import com.lesfurets.jenkins.unit.BasePipelineTest
 import org.example.utils.DeployUtils
 
 class DeployAppTest extends BasePipelineTest {
+
     def deployAppScript
-    def mockDeployUtils
+    DeployUtils mockDeployUtils  // <- Use real DeployUtils instance
 
     @Before
     void setUp() throws Exception {
@@ -15,27 +16,26 @@ class DeployAppTest extends BasePipelineTest {
         // Load the shared library step under test
         deployAppScript = loadScript("vars/deployApp.groovy")
 
-        // Mock echo step
+        // Mock Jenkins steps
         helper.registerAllowedMethod("echo", [String]) { msg -> println msg }
-
-        // Mock error step to throw RuntimeException
         helper.registerAllowedMethod("error", [String]) { msg -> throw new RuntimeException(msg) }
 
-        // --- CHANGE: Mock DeployUtils as a real Groovy object with deploy() method ---
-        mockDeployUtils = new Object() {
-            def deploy(String app, String version) {
-                return "FAILED"  // default, will override per test
-            }
-        }
+        // --- KEY CHANGE ---
+        // Create a real DeployUtils instance (env can be dummy for now)
+        mockDeployUtils = new DeployUtils(null, "dev")
 
+        // Register DeployUtils constructor to always return the mock
         helper.registerAllowedMethod("org.example.utils.DeployUtils", [Object, String]) { script, env ->
+            // Update the env inside mock if needed
+            mockDeployUtils.env = env
             return mockDeployUtils
         }
     }
 
     @Test
     void testSuccessfulDeployment() {
-        // Override deploy() to return SUCCESS for this test
+        // --- KEY CHANGE ---
+        // Override deploy() to simulate SUCCESS
         mockDeployUtils.metaClass.deploy = { String app, String version -> "SUCCESS" }
 
         def result = deployAppScript.call("myApp", "1.0.0", "dev")
@@ -44,13 +44,15 @@ class DeployAppTest extends BasePipelineTest {
 
     @Test
     void testDeploymentFailure() {
-        // Override deploy() to return FAILED to trigger error()
+        // --- KEY CHANGE ---
+        // Override deploy() to simulate FAILURE
         mockDeployUtils.metaClass.deploy = { String app, String version -> "FAILED" }
 
         try {
             deployAppScript.call("myApp", "1.0.0", "dev")
-            fail("Expected exception not thrown")
+            fail("Expected exception not thrown")  // will be skipped if error() is triggered
         } catch (RuntimeException e) {
+            // Check that the script triggered the error correctly
             assertTrue(e.message.contains("Deployment failed"))
         }
     }
