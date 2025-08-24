@@ -13,7 +13,7 @@ dependencies {
     implementation localGroovy()
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.22'
+    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.16'
     testImplementation 'org.assertj:assertj-core:3.26.3'
     testImplementation 'net.bytebuddy:byte-buddy:1.17.0'
     testImplementation 'org.objenesis:objenesis:3.4'
