@@ -5,11 +5,15 @@ pipeline {
             args '-v $HOME/.gradle:/home/gradle/.gradle'
         }
     }
+    options {
+        timestamps()
+    }
     /*
     tools {
         jdk 'jdk11'
         gradle 'gradle7'
     }
+    */
     stages {
         stage('Unit Tests') {
             steps { sh './gradlew clean test' }
