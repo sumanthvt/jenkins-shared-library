@@ -1,0 +1,51 @@
+plugins {
+    id 'groovy'
+    id 'java'
+    id 'jacoco'
+    id "org.sonarqube" version "4.4.1.3373" // SonarQube plugin
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation localGroovy()
+    implementation 'org.codehaus.groovy:groovy-all:3.0.22'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.22'
+    testImplementation 'org.assertj:assertj-core:3.26.3'
+    testImplementation 'net.bytebuddy:byte-buddy:1.17.0'
+    testImplementation 'org.objenesis:objenesis:3.4'
+    testImplementation 'org.hamcrest:hamcrest:3.0'
+}
+
+sourceSets {
+    main {
+        groovy {
+            srcDirs = ['src', 'vars']   // tells Gradle your shared lib Groovy code lives in "src/"            
+        }
+    }
+    test {
+        groovy {
+            srcDirs = ['test']  // tells Gradle your unit tests live in "test/"
+        }
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+test {
+    useJUnit()       // ensures Gradle uses JUnit 4 runner
+    testLogging {
+        events "PASSED", "FAILED", "SKIPPED"
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
