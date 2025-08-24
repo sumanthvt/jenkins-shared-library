@@ -11,13 +11,6 @@ pipeline {
         gradle 'gradle7'
     }
     stages {
-        stage('Checkout') {
-            //steps { checkout scm }
-            steps {
-                git branch: 'main', url: 'https://github.com/sumanthvt/jenkins-shared-library.git'
-            }
-        }
-    */
         stage('Unit Tests') {
             steps { sh './gradlew clean test' }
             post {
