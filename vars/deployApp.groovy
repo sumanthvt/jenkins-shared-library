@@ -1,19 +1,20 @@
 import org.example.utils.DeployUtils
 
-def call(String appName, String version, String targetEnv, deployUtils = null) {
+def call(String appName, String version, String targetEnv) {
     if (!appName || !version || !targetEnv) {
         error "Missing required parameters: appName, version, targetEnv"
     }
 
-    // Use injected deployUtils or create a new one
-    def utils = deployUtils ?: new DeployUtils(this, targetEnv)
+    def deployUtils = new DeployUtils(this, targetEnv)
     echo "Starting deployment of ${appName}:${version} to ${targetEnv}"
 
-    def result = utils.deploy(appName, version)
+    def result = deployUtils.deploy(appName, version)
+
     if (result != "SUCCESS") {
         error "Deployment failed for ${appName}:${version} on ${targetEnv}"
+    } else {
+        echo "Deployment of ${appName}:${version} to ${targetEnv} completed successfully"
     }
 
-    echo "Deployment of ${appName}:${version} to ${targetEnv} completed successfully"
     return result
 }
