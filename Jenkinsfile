@@ -14,7 +14,9 @@ pipeline {
     stages {
         stage('Checkout') {
             //steps { checkout scm }
-            git branch: 'main', url: 'https://github.com/sumanthvt/jenkins-shared-library.git'
+            steps {
+                git branch: 'main', url: 'https://github.com/sumanthvt/jenkins-shared-library.git'
+            }
         }
         stage('Unit Tests') {
             steps { sh './gradlew clean test' }
