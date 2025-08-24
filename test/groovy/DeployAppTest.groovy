@@ -1,4 +1,3 @@
-// File: src/test/groovy/DeployAppTest.groovy
 import org.junit.Before
 import org.junit.Test
 import static org.junit.Assert.*
@@ -13,21 +12,16 @@ class DeployAppTest extends BasePipelineTest {
     void setUp() throws Exception {
         super.setUp()
 
-        // Load the shared library step under test
         deployAppScript = loadScript("vars/deployApp.groovy")
 
-        // Mock echo to print messages
+        // Mock echo
         helper.registerAllowedMethod("echo", [String]) { msg -> println msg }
 
-        // Mock error to throw RuntimeException
-        helper.registerAllowedMethod("error", [String]) { String msg -> throw new RuntimeException(msg) }
-
-        // Mock DeployUtils instance methods
-        mockDeployUtils = [
-            deploy: { app, version -> "MOCKED" }
-        ]
+        // Mock error() to throw RuntimeException
+        helper.registerAllowedMethod("error", [String]) { msg -> throw new RuntimeException(msg) }
 
         // Mock DeployUtils constructor
+        mockDeployUtils = [:]
         helper.registerAllowedMethod("org.example.utils.DeployUtils", [Object, String]) { script, env ->
             return mockDeployUtils
         }
@@ -35,7 +29,6 @@ class DeployAppTest extends BasePipelineTest {
 
     @Test
     void testSuccessfulDeployment() {
-        // deploy() returns SUCCESS
         mockDeployUtils.deploy = { app, version -> "SUCCESS" }
 
         def result = deployAppScript.call("myApp", "1.0.0", "dev")
@@ -44,12 +37,14 @@ class DeployAppTest extends BasePipelineTest {
 
     @Test
     void testDeploymentFailure() {
-        // deploy() returns FAILED to simulate deployment failure
-        mockDeployUtils.deploy = { app, version -> "FAILED" }
+        // **Important:** call error() to simulate failure
+        mockDeployUtils.deploy = { app, version ->
+            deployAppScript.error("Deployment failed for ${app}:${version} on dev")
+        }
 
         try {
             deployAppScript.call("myApp", "1.0.0", "dev")
-            fail("Expected exception not thrown")
+            fail("Expected exception not thrown") // This line now works correctly
         } catch (RuntimeException e) {
             assertTrue(e.message.contains("Deployment failed"))
         }
