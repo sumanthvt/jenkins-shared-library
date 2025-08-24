@@ -11,7 +11,10 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 // Run Gradle wrapper tests
-                sh './gradlew clean test'
+                sh """
+                chmod +x gradlew
+                ./gradlew clean test
+                """
             }
             post {
                 always {
