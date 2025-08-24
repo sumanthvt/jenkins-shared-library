@@ -12,17 +12,19 @@ class DeployAppTest extends BasePipelineTest {
     void setUp() throws Exception {
         super.setUp()
 
-        // Load shared library step
+        // Load the shared library step under test
         deployAppScript = loadScript("vars/deployApp.groovy")
 
-        // Mock echo
+        // Mock Jenkins pipeline steps
         helper.registerAllowedMethod("echo", [String]) { msg -> println msg }
+        helper.registerAllowedMethod("error", [String]) { msg -> throw new RuntimeException(msg) }
 
-        // Mock DeployUtils constructor
+        // Mock DeployUtils instance methods
         mockDeployUtils = [
-            deploy: { app, version -> return "MOCKED" }
+            deploy: { app, version -> "MOCKED" }  // default mock
         ]
 
+        // Mock DeployUtils constructor
         helper.registerAllowedMethod("org.example.utils.DeployUtils", [Object, String]) { script, env ->
             return mockDeployUtils
         }
@@ -30,14 +32,18 @@ class DeployAppTest extends BasePipelineTest {
 
     @Test
     void testSuccessfulDeployment() {
+        // Override deploy method to return SUCCESS
         mockDeployUtils.deploy = { app, version -> "SUCCESS" }
+
         def result = deployAppScript.call("myApp", "1.0.0", "dev")
         assertEquals("SUCCESS", result)
     }
 
     @Test
     void testDeploymentFailure() {
+        // Override deploy method to simulate failure
         mockDeployUtils.deploy = { app, version -> "FAILED" }
+
         try {
             deployAppScript.call("myApp", "1.0.0", "dev")
             fail("Expected exception not thrown")
