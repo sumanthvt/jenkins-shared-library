@@ -11,7 +11,7 @@ class DeployUtils implements Serializable {
 
     def deploy(String appName, String version) {
         script.echo "Deploying ${appName}:${version} to ${env}"
-        // Here you would have actual deployment logic, for now return SUCCESS
+        // Real deployment logic would go here (Here you would have actual deployment logic, for now return SUCCESS)
         return "SUCCESS"
     }
 }
